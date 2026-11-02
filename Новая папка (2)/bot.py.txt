@@ -1,0 +1,86 @@
+import asyncio
+import logging
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import CommandStart
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+# Замени на свой токен
+TOKEN = "8644126125:AAF2xcRAOX5eVbSymvTkY1T86efL4DbA4Go"
+
+logging.basicConfig(level=logging.INFO)
+
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
+
+
+def main_menu() -> InlineKeyboardMarkup:
+    """Главное меню с кнопками"""
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🎲 Случайный факт", callback_data="fact")
+    kb.button(text="😂 Шутка", callback_data="joke")
+    kb.button(text="ℹ️ О боте", callback_data="about")
+    kb.adjust(1)
+    return kb.as_markup()
+
+
+@dp.message(CommandStart())
+async def cmd_start(message: Message):
+    """Обработчик команды /start"""
+    await message.answer(
+        f"Привет, {message.from_user.first_name}! 👋\n\n"
+        "Я простой бот. Выбери, что тебе интересно:",
+        reply_markup=main_menu()
+    )
+
+
+@dp.callback_query(F.data == "fact")
+async def send_fact(callback: CallbackQuery):
+    facts = [
+        "🐙 У осьминога три сердца.",
+        "🍯 Мёд не портится — ему тысячи лет.",
+        "🌍 Земля — единственная планета, не названная в честь бога.",
+        "🐌 У улитки около 25 000 зубов.",
+        "⚡ Молния бьёт в Землю около 100 раз в секунду.",
+    ]
+    import random
+    await callback.message.answer(f"💡 {random.choice(facts)}")
+    await callback.answer()
+
+
+@dp.callback_query(F.data == "joke")
+async def send_joke(callback: CallbackQuery):
+    jokes = [
+        "— Почему программисты путают Хэллоуин и Рождество?\n— Потому что Oct 31 == Dec 25 🎃",
+        "— Сколько программистов нужно, чтобы вкрутить лампочку?\n— Ни одного, это проблема железа 💡",
+        "— Как называется боязнь программистов?\n— Кодофобия 😱",
+    ]
+    import random
+    await callback.message.answer(f"😂 {random.choice(jokes)}")
+    await callback.answer()
+
+
+@dp.callback_query(F.data == "about")
+async def about(callback: CallbackQuery):
+    await callback.message.answer(
+        "🤖 Я учебный бот на aiogram 3.\n"
+        "Умею показывать факты, шутки и отвечать на /start."
+    )
+    await callback.answer()
+
+
+@dp.message()
+async def echo(message: Message):
+    """Отвечает на любой текст"""
+    await message.answer(
+        f"Ты написал: «{message.text}»\nНажми /start, чтобы открыть меню."
+    )
+
+
+async def main():
+    print("Бот запущен...")
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
